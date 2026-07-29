@@ -314,8 +314,9 @@ Known incomplete, with the cause identified for each:
 
 - **No device tags.** All 273 functions read `=+`. Numbering fails with
   `S029079 Unable to generate numbering groups` through both the `renumber`
-  action and the typed API. Function definitions, identifier letters and the
-  scheme name have all been ruled out — FINDINGS §3.
+  action and the typed API. Function definitions, identifier letters, the scheme
+  name and — as of 2026-07-29 — missing parts have all been ruled out. Six
+  attempts, FINDINGS §3.
 - **Table of contents and terminal diagrams are empty.** The project defines no
   report templates, so `reports /TYPE:PROJECT` succeeds and generates nothing —
   FINDINGS §4.
@@ -325,19 +326,24 @@ Known incomplete, with the cause identified for each:
   distribution is drawn as one column per feeder — FINDINGS §1.4.
 - **Cabinet layout is a drawing, not device placements.** Page `/19` carries a
   1:7 mounting-plate arrangement (37 rectangles, 25 texts) and the project has
-  a real article-free Pro Panel `InstallationSpace` + `MountingPanel`. But no
-  device is *mounted* on that panel: mounting needs parts with physical
-  dimensions and nothing here carries a part by design — FINDINGS §6.
+  a real article-free Pro Panel `InstallationSpace` + `MountingPanel`. No device
+  is *mounted* on that panel. **The reason it could not be has gone** — mounting
+  needs parts with physical dimensions, and 144 functions now have them. What is
+  missing is the command: a `panel.mount` wrapping
+  `MountingPanelService.CreateArticlePlacement`. Not written, not run —
+  FINDINGS §6.
 - Page numbers on disk sit one below the design numbers used throughout these
   documents, after an unscoped `renumber /TYPE:PAGES` — mapping table in
   FINDINGS §5.
 
-Not built: the MCP server wrapper itself, and anything touching parts
-placement. `DataModel.E3D` is now opened — one installation space with an
-article-free mounting panel — but nothing is mounted in it.
+Not built: the MCP server wrapper itself, and 3D device mounting.
+`DataModel.E3D` is opened — one installation space with an article-free
+mounting panel — but nothing is mounted in it.
 
 **Constraint on content:** this installation has **no Mitsubishi FX5U / MELSEC /
-MR-series parts or macros** (verified: 0 hits in the parts database). Available
-macro libraries are Rittal (419), Siemens (152), Phoenix (55), Allen-Bradley (35).
-Any FX5U panel built here uses substitute hardware until Mitsubishi data is
-imported.
+MR-series parts or macros**. The parts database holds 654 parts —
+`RIT 233, SIE 156, FES 100, ESS 51, A-B 37, LAPP 31, PXC 30` and a handful more,
+catalogued in [`docs/parts-catalog.json`](docs/parts-catalog.json) — and none of
+them is Mitsubishi. Available macro libraries are Rittal (419), Siemens (152),
+Phoenix (55), Allen-Bradley (35). Any FX5U panel built here uses substitute
+hardware until Mitsubishi data is imported.
