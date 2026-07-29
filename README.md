@@ -68,6 +68,8 @@ restarting EPLAN. Verified working.
 | `tools/Invoke-EplanAction.ps1` | dispatch EPLAN's own actions (`generate`, `renumber`, `reports`) |
 | `tools/Build-RoboArmSchematic.ps1` | build every schematic page — idempotent, clears each page first |
 | `tools/Get-ProjectAudit.ps1` | **the finish check**: functions, connections and untagged count per page |
+| `tools/Set-RoboArmParts.ps1` | allocate a part to every function that represents a real device — idempotent |
+| `docs/parts-catalog.json` | all 654 parts in the local database, dumped via `parts.search` |
 | `tools/Get-SymbolGeometry.ps1` | measure a symbol's connection-point offsets before designing with it |
 | `tools/Build-PanelSpace.ps1` | create the Pro Panel 3D space and mounting plate — **not idempotent** |
 | `tools/Build-PanelLayout.ps1` | draw the cabinet arrangement on the panel-layout page — idempotent |
@@ -100,6 +102,25 @@ untagged (=+)     = 273
 and every page `=RA1+CAB/2` through `/17` reporting a non-zero function count.
 The audit reopens the project from disk, so a passing run is also the
 persistence proof — there is no `Save` in this API, only `Project.Close()`.
+
+For parts allocation:
+
+```powershell
+.\tools\Invoke-EplanBridge.ps1 -Command project.parts `
+    -Argument 'C:\Users\Kishor\Tovex-Work\eplan-propanel-bridge\projects\RoboArm_6DOF_FX5U.elk'
+```
+
+Success is `withoutPart` reading `0`:
+
+```
+{"totalFunctions":169,"withPart":144,"withoutPart":0,
+ "cannotCarryArticle":25,"distinctParts":9}
+```
+
+`totalFunctions` is 169 here and 273 in the audit above, and both are correct —
+the audit sums 16 page-filtered queries, this is one project-wide query, and
+`GetFunctions(null)` does not return the 104 PLC connection points. Do not
+"fix" either number to match the other.
 
 To rebuild the schematic from scratch and re-verify:
 
@@ -164,6 +185,9 @@ Eplan.exe /Variant:"Pro Panel" EplanServer /EPLANSERVERPORT:<port>
 | `space.list` | `.elk` path | installation spaces and their contents |
 | `graphics.rect` | `project=…;page=…;x1=…;y1=…;x2=…;y2=…;filled=0\|1` | one rectangle — graphics only, carries no function |
 | `graphics.text` | `project=…;page=…;x=…;y=…;height=…;text=…` | one text item; `text=` may not contain `;` |
+| `parts.search` | `filter=…;group=…;limit=N` | parts matching a substring over part number, type, manufacturer and description — read-only |
+| `function.setpart` | `project=…;part=…;page=…;symbol=…` | assigns one part to matching functions; `page=` optional (whole project when omitted). Adds only — **there is no counterpart that removes** |
+| `project.parts` | `.elk` path | **the parts finish check**: functions with/without a part, grouped by part number |
 
 Page types accepted by `page.create`: `Circuit`, `TitlePage`, `TableOfContents`,
 `PLCDiagram`, `PLCCardOverview`, `TerminalDiagram`, `PanelLayout`, `Overview`,
@@ -269,6 +293,19 @@ total functions   = 273     (16 content pages, 0 placement failures)
 total connections = 129     (all Circuit)
 untagged (=+)     = 273
 ```
+
+**Parts are allocated.** 144 functions carry a real part from the local
+database, 0 are left without one, verified from disk after a close→reopen:
+
+```
+withPart = 144   withoutPart = 0   cannotCarryArticle = 25   distinctParts = 9
+```
+
+Every one is a **substitute** — this machine holds no Mitsubishi data, so an
+`SEW.MC07B0015-5A3-4-00` vector drive stands in for each MR-J4-B amplifier and a
+`SEW.DRN90L4/FE/TH` for each servo motor. The register is
+[`docs/substitutions.md`](docs/substitutions.md); do not read the BOM as a
+specification.
 
 Reproduce with `tools\Get-ProjectAudit.ps1`. Full spec in
 [`FINDINGS.md`](FINDINGS.md); every dead end in [`ATTEMPTS.md`](ATTEMPTS.md).
